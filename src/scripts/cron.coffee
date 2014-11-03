@@ -56,6 +56,17 @@ updateJobTimezone = (robot, id, timezone) ->
     return yes
   no
 
+updateJobUser = (robot, id, msg) ->
+  if JOBS[id]
+    JOBS[id].stop()
+    clonedUser = {}
+    clonedUser[k] = v for k,v of msg.message.user
+    JOBS[id].user = clonedUser
+    robot.brain.data.cronjob[id] = JOBS[id].serialize()
+    JOBS[id].start()
+    return yes
+  no
+
 module.exports = (robot) ->
   robot.brain.data.cronjob or= {}
   robot.brain.on 'loaded', =>
@@ -100,6 +111,14 @@ module.exports = (robot) ->
     for id in targetJobs
       if (timezone = msg.match[2]) and updateJobTimezone(robot, id, timezone)
         msg.send "Job #{id} updated to use #{timezone}"
+      else
+        msg.send "Job #{id} does not exist"
+  
+  robot.respond /(?:mv|move) job ([\d,]+) here/i, (msg) ->
+    targetJobs = msg.match[1].split(",")
+    for id in targetJobs
+      if updateJobUser(robot, id, msg)
+        msg.send "Job #{id} moved"
       else
         msg.send "Job #{id} does not exist"
 
