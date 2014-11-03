@@ -80,11 +80,13 @@ module.exports = (robot) ->
         text += "#{id}: #{job.pattern} @#{room} \"#{job.message}\"\n"
     msg.send text if text.length > 0
 
-  robot.respond /(?:rm|remove|del|delete) job (\d+)/i, (msg) ->
-    if (id = msg.match[1]) and unregisterJob(robot, id)
-      msg.send "Job #{id} deleted"
-    else
-      msg.send "Job #{id} does not exist"
+  robot.respond /(?:rm|remove|del|delete) job ([\d,]+)/i, (msg) ->
+    targetJobs = msg.match[1].split(",")
+    for id in targetJobs
+      if unregisterJob(robot, id)
+        msg.send "Job #{id} deleted"
+      else
+        msg.send "Job #{id} does not exist"
 
   robot.respond /(?:rm|remove|del|delete) job with message (.+)/i, (msg) ->
     message = msg.match[1]
@@ -93,11 +95,13 @@ module.exports = (robot) ->
       if (room == msg.message.user.reply_to or room == msg.message.user.room) and job.message == message and unregisterJob(robot, id)
         msg.send "Job #{id} deleted"
   
-  robot.respond /(?:tz|timezone) job (\d+) (.*)/i, (msg) ->
-    if (id = msg.match[1]) and (timezone = msg.match[2]) and updateJobTimezone(robot, id, timezone)
-      msg.send "Job #{id} updated to use #{timezone}"
-    else
-      msg.send "Job #{id} does not exist"
+  robot.respond /(?:tz|timezone) job ([\d,]+) (.*)/i, (msg) ->
+    targetJobs = msg.match[1].split(",")
+    for id in targetJobs
+      if (timezone = msg.match[2]) and updateJobTimezone(robot, id, timezone)
+        msg.send "Job #{id} updated to use #{timezone}"
+      else
+        msg.send "Job #{id} does not exist"
 
 class Job
   constructor: (id, pattern, user, message, timezone) ->
